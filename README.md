@@ -89,6 +89,8 @@ En complément du dataset labellisé, un **web scraping** sera réalisé afin de
 
 ## Architecture cible (End-to-End)
 
+![Architecture End-to-End de ToxiScan](assets/architecture.png)
+
 ```mermaid
 flowchart LR
   A[Data Sources\nHuggingFace Dataset Labeled\nWeb Scraping Hacker News]
