@@ -87,28 +87,28 @@ En complément du dataset labellisé, un **web scraping** sera réalisé afin de
 
 ---
 
-##  Architecture cible (End-to-End)
+## Architecture cible (End-to-End)
 
 ```mermaid
 flowchart LR
-  A[Sources de données\nDataset HuggingFace (labellisé)\n+ Web Scraping (Hacker News)]
-    --> B[Nettoyage & EDA]
+  A[Data Sources\nHuggingFace Dataset Labeled\nWeb Scraping Hacker News]
+    --> B[Cleaning and EDA]
 
-  B --> C[Pipeline ML\nPrétraitement + Feature Engineering]
+  B --> C[ML Pipeline\nPreprocessing and Feature Engineering]
 
-  C --> D[Entraînement des modèles\nBaselines + Modèles avancés]
+  C --> D[Model Training\nBaselines and Advanced Models]
 
-  D --> E[Ensembling\nVoting / Stacking]
+  D --> E[Ensembling\nVoting and Stacking]
 
-  E --> F[MLflow Tracking\nParamètres, métriques, artefacts]
+  E --> F[MLflow Tracking\nParameters Metrics Artifacts]
 
-  F --> G[Meilleur modèle\nExport .pkl]
+  F --> G[Best Model\nExport PKL]
 
-  G --> H[API Backend\nFastAPI + Swagger]
+  G --> H[FastAPI Backend\nSwagger API]
 
-  H --> I[Frontend\nAngular]
+  H --> I[Angular Frontend]
 
-  I --> J[Déploiement\nDocker & docker-compose]
+  I --> J[Docker Deployment]
 
 ---
 ##  Modélisation & Comparaison (prévision)
@@ -164,7 +164,6 @@ ToxiScan/
 ├── Dockerfile.backend
 ├── Dockerfile.frontend
 └── docker-compose.yml
-
 
 ---
 ##  Livrable – Première semaine
