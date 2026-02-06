@@ -170,12 +170,12 @@ ToxiScan/
 
 Pour la première semaine, ce dépôt contient :
 
-- ✔ Le sujet du projet et sa problématique  
-- ✔ Les objectifs détaillés  
-- ✔ Le lien du dataset officiel  
-- ✔ Un plan de web scraping réaliste  
-- ✔ L’architecture cible du projet  
-- ✔ La structure du repository conforme aux exigences  
+-  Le sujet du projet et sa problématique  
+-  Les objectifs détaillés  
+-  Le lien du dataset officiel  
+-  Un plan de web scraping réaliste  
+-  L’architecture cible du projet  
+-  La structure du repository conforme aux exigences  
 
 ---
 ##  Conclusion
