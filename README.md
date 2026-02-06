@@ -109,7 +109,7 @@ flowchart LR
   H --> I[Angular Frontend]
 
   I --> J[Docker Deployment]
-
+```
 ---
 ##  Modélisation & Comparaison (prévision)
 
