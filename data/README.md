@@ -1,6 +1,6 @@
 # Dataset — ToxiScan
 
-## Dataset principal (HuggingFace — non Kaggle)
+## Dataset principal (HuggingFace)
 - Nom : Jigsaw Toxic Comment Classification
 - Lien : https://huggingface.co/datasets/thesofakillers/jigsaw-toxic-comment-classification-challenge
 - Type : commentaires textuels + labels de toxicité
