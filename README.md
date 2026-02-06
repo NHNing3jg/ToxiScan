@@ -48,7 +48,7 @@ Les objectifs spécifiques sont :
 
 ---
 
-##  Dataset principal (Source officielle – non Kaggle)
+##  Dataset principal (Source officielle)
 
 - **Nom du dataset :** Jigsaw Toxic Comment Classification  
 - **Source :** Hugging Face Datasets  
