@@ -6,3 +6,6 @@ seaborn
 requests
 tqdm
 datasets
+beautifulsoup4
+scipy
+wordcloud
