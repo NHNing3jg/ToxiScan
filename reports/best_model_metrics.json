@@ -1,0 +1,21 @@
+{
+  "f1_macro": 0.5646926767016068,
+  "f1_weighted": 0.7042573559000898,
+  "best_params": {
+    "tfidf__max_features": 30000,
+    "tfidf__min_df": 2,
+    "tfidf__ngram_range": [
+      1,
+      2
+    ],
+    "clf__estimator__C": 2.0
+  },
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ]
+}
