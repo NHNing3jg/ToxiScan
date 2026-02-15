@@ -69,21 +69,95 @@ Ce dataset contient des **commentaires textuels réels** accompagnés de labels 
 
 ---
 
-##  Web Scraping (complément de données réelles)
+## Web Scraping (Complément de données réelles)
 
-En complément du dataset labellisé, un **web scraping** sera réalisé afin de collecter des textes publics et tester le modèle dans des conditions réelles.
+En complément du dataset labellisé (Hugging Face – Jigsaw Toxic Comment Classification),
+nous avons mis en place deux méthodes de collecte automatisée de données afin
+d’obtenir des commentaires réels non labellisés et tester la robustesse du modèle
+dans des conditions proches du monde réel.
 
-### Source prévue
-- **Hacker News (API publique)** — commentaires publics
+---
 
-### Objectifs du scraping
-- Collecter entre **50 000 et 200 000 commentaires**
-- Tester la robustesse du modèle sur des données non labellisées
-- Réaliser une EDA “monde réel”
+###  Scraping via API Publique — Hacker News
+
+- Source : https://news.ycombinator.com
+- Méthode : API officielle Firebase Hacker News
+- Format : JSON structuré
+
+#### Implémentation
+Le script `hn_api_collect.py` :
+
+- Récupère les IDs des items
+- Filtre les commentaires (`type == comment`)
+- Extrait les champs :
+  - id
+  - by
+  - time
+  - parent
+  - text
+- Sauvegarde dans : data/raw_scraped/hn_comments_raw.csv
+
+#### Objectif
+
+- Collecte massive (plusieurs milliers de commentaires)
+- Données structurées
+- Tests de robustesse du modèle
+- Simulation d’inférence en production
+
+---
+
+###  Scraping HTML — Parsing du DOM
+
+- Source : pages HTML `item?id=XXXX`
+- Méthode : `requests` + `BeautifulSoup`
+- Extraction des balises `span.commtext`
+
+#### Implémentation
+Le script `hn_html_scrape.py` :
+
+1. Récupère les IDs des threads depuis la page d’accueil
+2. Accède aux pages de discussion
+3. Parse le HTML
+4. Extrait les commentaires
+5. Nettoie le texte (regex + normalisation)
+6. Sauvegarde dans : data/raw_scraped/hn_comments_html.csv
+
+#### Pourquoi faire du scraping HTML ?
+
+- Comprendre la structure DOM d’un site réel
+- Manipuler des données non structurées
+- Gérer rate limiting et parsing
+- Simuler un scénario industriel réel
+
+---
+
+### Objectifs globaux du Web Scraping dans ToxiScan
+
+- Collecter plusieurs milliers de commentaires publics
+- Tester la robustesse du modèle entraîné
+- Réaliser une EDA complémentaire sur données réelles
 - Alimenter la démonstration du frontend
+- Simuler une utilisation en conditions réelles
 
-> Le dataset Hugging Face sera utilisé pour l’entraînement supervisé,  
-> tandis que les données scrapées serviront principalement à l’évaluation et à la démonstration.
+---
+
+### Positionnement dans le projet
+
+-  Dataset Hugging Face → Entraînement supervisé + MLflow  
+-  Données scrapées (API + HTML) → Tests d’inférence & démonstration
+
+> Le dataset Hugging Face est utilisé pour l'entraînement supervisé,  
+> tandis que les données scrapées servent à l’évaluation qualitative
+> et à la validation en conditions réelles.
+
+---
+
+### Bonnes pratiques & éthique
+
+- Données publiques uniquement
+- Respect du rate limiting
+- Aucun contournement de protection
+- Usage académique exclusivement
 
 ---
 
