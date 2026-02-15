@@ -1,0 +1,3 @@
+n_rows,n_empty,avg_char_len,p50_char_len,p90_char_len,max_char_len,source
+1500,0,375.0473333333333,253.0,833.4000000000005,4233,HN_API
+221,0,235.0497737556561,165.0,487.0,1226,HN_HTML
