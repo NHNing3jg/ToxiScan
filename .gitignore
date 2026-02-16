@@ -244,3 +244,4 @@ Thumbs.db
 .idea/
 
 sanity_check_plot.png
+mlflow.db
