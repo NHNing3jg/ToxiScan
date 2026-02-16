@@ -229,6 +229,16 @@ Il a été enregistré et exporté pour le déploiement.
 Le meilleur modèle entraîné a été exporté au format `.joblib`
 et intégré dans une API REST développée avec FastAPI.
 
+### Lancer l’API en local
+
+```bash
+pip install -r requirements.txt
+uvicorn code.app:app --reload
+Swagger UI : http://127.0.0.1:8000/docs
+Health check : http://127.0.0.1:8000/health
+
+---
+
 ### Endpoints disponibles
 
 - GET /health  
@@ -284,7 +294,7 @@ Cela permet de tester l’API sans frontend.
 - **Data Science :** pandas, numpy, scikit-learn  
 - **Données textuelles :** TF-IDF, preprocessing de texte  
 - **MLOps :** MLflow    
-- **Backend : FastAPI + Swagger (déployé et testé)
+- **Backend :** FastAPI + Swagger (déployé et testé)
 - Suivi des expériences : MLflow (tracking + model registry)
 - **Frontend :** Angular  
 - **Déploiement :** Docker & docker-compose  
