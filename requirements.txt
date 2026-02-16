@@ -9,3 +9,7 @@ datasets
 beautifulsoup4
 scipy
 wordcloud
+fastapi
+uvicorn
+python-multipart
+joblib

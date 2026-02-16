@@ -187,27 +187,95 @@ flowchart LR
   I --> J[Docker Deployment]
 ```
 ---
-##  Modélisation & Comparaison (prévision)
+##  Modélisation & Comparaison (implémentée)
 
-### Modèles de base
-- Logistic Regression
-- Naive Bayes
+### Modèle baseline
 
-### Modèles avancés
-- Support Vector Machine (SVM)
-- Random Forest / XGBoost (selon faisabilité)
+- TF-IDF + OneVsRest(LogisticRegression)
+- Gestion du déséquilibre via class_weight="balanced"
+- Optimisation des hyperparamètres avec GridSearchCV
 
-### Approches ensemblistes
-- Voting Classifier
-- Stacking Classifier
+Ce modèle s’est révélé le plus performant en F1-score macro.
 
-### Métriques d’évaluation
-- Accuracy
-- F1-score (macro / weighted)
-- Recall (classe toxique)
-- (Optionnel) ROC-AUC
+---
 
-Toutes les expériences seront enregistrées et comparées avec **MLflow**.
+### Modèles avancés testés
+
+- Random Forest (avec réduction de dimension via TruncatedSVD)
+- XGBoost (avec TruncatedSVD)
+
+Ces modèles ont été évalués et comparés via MLflow.
+
+---
+
+### Suivi des expériences (MLflow)
+
+Toutes les expérimentations (Baseline, RandomForest, XGBoost) ont été :
+
+- Trackées avec MLflow
+- Comparées via F1-macro et F1-weighted
+- Loggées avec paramètres et artefacts
+
+Le meilleur modèle sélectionné :
+
+TF-IDF + OneVsRest(LogisticRegression)
+
+Il a été enregistré et exporté pour le déploiement.
+
+---
+
+## Déploiement Backend — FastAPI
+
+Le meilleur modèle entraîné a été exporté au format `.joblib`
+et intégré dans une API REST développée avec FastAPI.
+
+### Endpoints disponibles
+
+- GET /health  
+  Vérifie si le modèle est correctement chargé.
+
+- POST /predict  
+  Prédiction sur un texte unique.
+  Retourne :
+  - Les 6 labels (0/1)
+  - Les probabilités associées
+
+- POST /predict_batch  
+  Permet d’uploader un fichier CSV contenant une colonne
+  `text` ou `comment_text` pour effectuer des prédictions en batch.
+
+### Swagger UI
+
+Documentation interactive disponible via :
+
+http://localhost:8000/docs
+
+Cela permet de tester l’API sans frontend.
+
+---
+
+### Exemple de réponse API
+
+```json
+{
+  "text": "you are stupid",
+  "predictions": {
+    "toxic": 1,
+    "severe_toxic": 1,
+    "obscene": 1,
+    "threat": 0,
+    "insult": 1,
+    "identity_hate": 1
+  },
+  "probabilities": {
+    "toxic": 0.99,
+    "severe_toxic": 0.72,
+    "obscene": 0.99,
+    "threat": 0.03,
+    "insult": 0.99,
+    "identity_hate": 0.50
+  }
+}
 
 ---
 ##  Stack technique
@@ -215,43 +283,56 @@ Toutes les expériences seront enregistrées et comparées avec **MLflow**.
 - **Langage :** Python  
 - **Data Science :** pandas, numpy, scikit-learn  
 - **Données textuelles :** TF-IDF, preprocessing de texte  
-- **MLOps :** MLflow  
-- **Backend :** FastAPI + Swagger  
+- **MLOps :** MLflow    
+- **Backend : FastAPI + Swagger (déployé et testé)
+- Suivi des expériences : MLflow (tracking + model registry)
 - **Frontend :** Angular  
 - **Déploiement :** Docker & docker-compose  
 - **CI/CD (optionnel) :** GitHub Actions  
 
 ---
 ##  Structure du repository
+
 ToxiScan/
 ├── README.md
 ├── requirements.txt
 ├── data/
-│ └── README.md
+│   ├── raw_hf/
+│   ├── raw_scraped/
+│   └── sample/
 ├── code/
-│ ├── scraping/
-│ ├── preprocessing.py
-│ ├── train.py
-│ ├── evaluate.py
-│ ├── mlflow_utils.py
-│ └── api/
+│   ├── scraping/
+│   ├── eda/
+│   ├── ml/
+│   ├── app.py
+│   └── api/
+├── models/
+│   └── best_multilabel_tfidf_logreg.joblib
+├── reports/
 ├── frontend/
-├── tutos/
-├── Dockerfile.backend
-├── Dockerfile.frontend
+├── mlruns/
 └── docker-compose.yml
 
 ---
-##  Livrable – Première semaine
 
-Pour la première semaine, ce dépôt contient :
+## État actuel du projet
 
--  Le sujet du projet et sa problématique  
--  Les objectifs détaillés  
--  Le lien du dataset officiel  
--  Un plan de web scraping réaliste  
--  L’architecture cible du projet  
--  La structure du repository conforme aux exigences  
+Phase 1 :
+- Dataset sélectionné
+- Web scraping API & HTML
+- EDA réalisée
+
+Phase 2 :
+- Pipeline TF-IDF + Logistic Regression
+- Optimisation GridSearchCV
+- Modèles avancés (RF, XGB)
+- Tracking MLflow
+- Sélection du meilleur modèle
+
+Phase 3 (en cours) :
+- API FastAPI fonctionnelle
+- Tests Swagger validés
+- Intégration frontend à venir  
 
 ---
 ##  Conclusion
