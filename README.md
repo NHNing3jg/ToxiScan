@@ -23,7 +23,7 @@
 Avec l’essor des plateformes numériques, les contenus toxiques (insultes, propos haineux, menaces, abus verbaux) sont devenus un problème majeur.
 La modération manuelle est coûteuse, lente et difficile à généraliser.
 
-**ToxiScan** a pour objectif de concevoir une **solution intelligente et automatisée** capable de détecter la toxicité dans des contenus textuels réels, en s’appuyant sur des techniques de **Machine Learning appliquées aux données textuelles**, tout en respectant une approche **end-to-end** et **MLOps**.
+**ToxiScan** a pour objectif de concevoir une **solution intelligente et automatisée** capable de détecter la toxicité dans des contenus textuels réels, en s’appuyant sur des techniques de **Machine Learning appliquées aux données textuelles**, tout en respectant une approche **end-to-end**.
 
 ---
 
@@ -33,7 +33,7 @@ L’objectif principal est de construire un **projet complet de bout en bout**, 
 
 Les objectifs spécifiques sont :
 
-1. Sélectionner et exploiter un **dataset textuel réel et volumineux** (non Kaggle).
+1. Sélectionner et exploiter un **dataset textuel réel et volumineux**.
 2. Collecter des données supplémentaires via **web scraping** pour se rapprocher de conditions réelles.
 3. Réaliser une **analyse exploratoire des données (EDA)**.
 4. Mettre en place un **pipeline de prétraitement des données textuelles**.
@@ -56,7 +56,16 @@ Les objectifs spécifiques sont :
   https://huggingface.co/datasets/thesofakillers/jigsaw-toxic-comment-classification-challenge  
 
 ### Description
-Ce dataset contient des **commentaires textuels réels** accompagnés de labels indiquant différents types de toxicité (toxic, insult, threat, etc.).
+Ce dataset contient des **commentaires textuels réels** accompagnés de labels indiquant différents types de toxicité.
+
+Dataset multi-label contenant environ **466 000 commentaires** annotés selon 6 catégories :
+
+- toxic  
+- severe_toxic  
+- obscene  
+- threat  
+- insult  
+- identity_hate 
 
 ### Pourquoi ce dataset ?
 - Données **textuelles réelles**
@@ -85,7 +94,7 @@ dans des conditions proches du monde réel.
 - Format : JSON structuré
 
 #### Implémentation
-Le script `hn_api_collect.py` :
+Le script `code/scraping/hn_api_collect.py` :
 
 - Récupère les IDs des items
 - Filtre les commentaires (`type == comment`)
@@ -113,7 +122,7 @@ Le script `hn_api_collect.py` :
 - Extraction des balises `span.commtext`
 
 #### Implémentation
-Le script `hn_html_scrape.py` :
+Le script `code/scraping/hn_html_scrape.py` :
 
 1. Récupère les IDs des threads depuis la page d’accueil
 2. Accède aux pages de discussion
@@ -231,8 +240,10 @@ et intégré dans une API REST développée avec FastAPI.
 
 ### Lancer l’API en local
 
+```bash
 pip install -r requirements.txt
 uvicorn code.app:app --reload
+```
 Swagger UI : http://127.0.0.1:8000/docs
 Health check : http://127.0.0.1:8000/health
 
@@ -285,7 +296,7 @@ Cela permet de tester l’API sans frontend.
     "identity_hate": 0.50
   }
 }
-
+```
 ---
 ##  Stack technique
 
