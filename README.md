@@ -231,7 +231,6 @@ et intégré dans une API REST développée avec FastAPI.
 
 ### Lancer l’API en local
 
-```bash
 pip install -r requirements.txt
 uvicorn code.app:app --reload
 Swagger UI : http://127.0.0.1:8000/docs
