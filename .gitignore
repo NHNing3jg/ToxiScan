@@ -245,3 +245,8 @@ Thumbs.db
 
 sanity_check_plot.png
 mlflow.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

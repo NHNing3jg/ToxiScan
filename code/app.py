@@ -7,7 +7,7 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel, Field
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # ---------- Config ----------
 LABELS = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
@@ -17,6 +17,14 @@ app = FastAPI(
     title="ToxiScan API",
     version="1.0.0",
     description="API FastAPI pour la détection multi-label de toxicité (6 labels).",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 model = None  # chargé au démarrage
