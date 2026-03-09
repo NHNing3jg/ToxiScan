@@ -114,7 +114,7 @@ code/scraping/hn_html_scrape.py
 - Simulation de données réelles de commentaires
 
 ---
-
+![Architecture End-to-End de ToxiScan](assets/architecture.png)
 ## Architecture du projet
 
 ```mermaid
