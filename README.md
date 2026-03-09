@@ -1,4 +1,4 @@
-# ToxiScan — Plateforme End-to-End de Détection de Contenus Toxiques 
+# ToxiScan — Plateforme End-to-End de Détection de Contenus Toxiques
 
 **Module :** Python for Data Science 2 (Guided Machine Learning Project)  
 **Encadrant :** Haythem Ghazouani  
@@ -7,359 +7,321 @@
 
 ---
 
-##  Équipe (Groupe de 4)
+## Présentation du projet
 
-- **Nour BEN HASSINE** — Acquisition des données (dataset + web scraping) & EDA  
-- **Nouha BEN KHELIL** — Prétraitement des données textuelles & Feature Engineering  
-- **Hadir FELLI** — Modélisation, comparaison des modèles, ensembling & MLflow  
-- **Nouha BRIKI** — Backend FastAPI, Frontend Angular & Docker  
+**ToxiScan** est une plateforme **Machine Learning end-to-end** conçue pour détecter automatiquement la **toxicité dans les commentaires en ligne**.
 
- **Mail de groupe :** nhningjg@gmail.com  
+Le projet couvre **tout le cycle de vie d'un modèle de Data Science** :
 
----
+- Collecte des données
+- Analyse exploratoire (EDA)
+- Prétraitement NLP
+- Entraînement et comparaison de modèles
+- Suivi des expériences (MLflow)
+- Déploiement via **FastAPI**
+- Interface utilisateur **React**
+- Containerisation avec **Docker**
 
-##  Contexte & Problématique
-
-Avec l’essor des plateformes numériques, les contenus toxiques (insultes, propos haineux, menaces, abus verbaux) sont devenus un problème majeur.
-La modération manuelle est coûteuse, lente et difficile à généraliser.
-
-**ToxiScan** a pour objectif de concevoir une **solution intelligente et automatisée** capable de détecter la toxicité dans des contenus textuels réels, en s’appuyant sur des techniques de **Machine Learning appliquées aux données textuelles**, tout en respectant une approche **end-to-end**.
-
----
-
-##  Objectifs du projet
-
-L’objectif principal est de construire un **projet complet de bout en bout**, de la donnée brute jusqu’au déploiement.
-
-Les objectifs spécifiques sont :
-
-1. Sélectionner et exploiter un **dataset textuel réel et volumineux**.
-2. Collecter des données supplémentaires via **web scraping** pour se rapprocher de conditions réelles.
-3. Réaliser une **analyse exploratoire des données (EDA)**.
-4. Mettre en place un **pipeline de prétraitement des données textuelles**.
-5. Entraîner et comparer **plusieurs modèles de Machine Learning**.
-6. Appliquer des **méthodes ensemblistes** pour améliorer les performances.
-7. Assurer la **traçabilité des expériences** avec **MLflow**.
-8. Exporter le **meilleur modèle** sous forme de fichier `.pkl`.
-9. Déployer le modèle via une **API FastAPI** (avec Swagger).
-10. Développer une **interface frontend Angular** pour tester et visualiser les prédictions.
-11. Containeriser l’application avec **Docker / docker-compose**.
-12. (Optionnel) Mettre en place une automatisation via **GitHub Actions**.
+L'objectif est de proposer un système capable d'identifier automatiquement les commentaires toxiques afin d'aider les plateformes numériques dans la **modération de contenu**.
 
 ---
 
-##  Dataset principal (Source officielle)
+## Équipe (Groupe de 4)
 
-- **Nom du dataset :** Jigsaw Toxic Comment Classification  
-- **Source :** Hugging Face Datasets  
-- **Lien :**  
-  https://huggingface.co/datasets/thesofakillers/jigsaw-toxic-comment-classification-challenge  
+| Membre | Rôle |
+|---|---|
+| **Nour BEN HASSINE** | Acquisition des données (dataset + web scraping) & EDA |
+| **Nouha BEN KHELIL** | Prétraitement des données textuelles & Feature Engineering |
+| **Hadir FELLI** | Modélisation, comparaison des modèles, ensembling & MLflow |
+| **Nouha BRIKI** | Backend FastAPI, Frontend React & Docker |
 
-### Description
-Ce dataset contient des **commentaires textuels réels** accompagnés de labels indiquant différents types de toxicité.
+📧 Mail de groupe : **nhningjg@gmail.com**
 
-Dataset multi-label contenant environ **466 000 commentaires** annotés selon 6 catégories :
+---
 
-- toxic  
-- severe_toxic  
-- obscene  
-- threat  
-- insult  
-- identity_hate 
+## Contexte & Problématique
 
-### Pourquoi ce dataset ?
-- Données **textuelles réelles**
-- **Volume important** (~466 000 lignes)
-- Problème industriel réel (modération de contenu)
-- Parfaitement adapté à :
-  - la comparaison de modèles
-  - l’ensembling
-  - le tracking MLflow
+Avec l'essor des réseaux sociaux et des plateformes numériques, les **contenus toxiques** (insultes, menaces, discours haineux) sont devenus un problème majeur.
+
+La modération manuelle présente plusieurs limites :
+
+- Lente et coûteuse
+- Difficile à généraliser à grande échelle
+- Sujette à des biais humains
+
+L'objectif de **ToxiScan** est de développer un système capable de **détecter automatiquement la toxicité dans des commentaires textuels** grâce aux techniques de **Machine Learning appliquées au NLP**.
+
+---
+
+## Objectifs du projet
+
+1. Sélectionner un **dataset textuel réel de grande taille**
+2. Collecter des données réelles supplémentaires via **web scraping**
+3. Réaliser une **analyse exploratoire des données (EDA)**
+4. Mettre en place un **pipeline de prétraitement NLP**
+5. Entraîner et comparer plusieurs **modèles de Machine Learning**
+6. Améliorer les performances via **ensembling**
+7. Suivre les expérimentations avec **MLflow**
+8. Exporter le meilleur modèle
+9. Déployer le modèle via **FastAPI**
+10. Construire un **dashboard React interactif**
+11. Containeriser l'application avec **Docker**
+12. Démontrer un pipeline complet **Machine Learning → Application Web**
+
+---
+
+## Dataset principal
+
+**Jigsaw Toxic Comment Classification**  
+Source : [HuggingFace](https://huggingface.co/datasets/thesofakillers/jigsaw-toxic-comment-classification-challenge)
+
+Le dataset contient environ **466 000 commentaires annotés** en classification **multi-label** :
+
+| Label | Description |
+|---|---|
+| `toxic` | Commentaire globalement toxique |
+| `severe_toxic` | Toxicité sévère |
+| `obscene` | Contenu obscène |
+| `threat` | Menace explicite |
+| `insult` | Insulte directe |
+| `identity_hate` | Haine identitaire |
+
+**Pourquoi ce dataset ?**
+- Données réelles de grande volumétrie
+- Problème réel de modération de contenu
+- Adapté au **multi-label classification**
 
 ---
 
 ## Web Scraping (Complément de données réelles)
 
-En complément du dataset labellisé (Hugging Face – Jigsaw Toxic Comment Classification),
-nous avons mis en place deux méthodes de collecte automatisée de données afin
-d’obtenir des commentaires réels non labellisés et tester la robustesse du modèle
-dans des conditions proches du monde réel.
+Pour simuler un environnement réel, nous avons collecté des commentaires depuis **Hacker News** — [news.ycombinator.com](https://news.ycombinator.com).
+
+### Scraping via API
+```
+code/scraping/hn_api_collect.py
+```
+- Récupération des IDs des commentaires
+- Extraction du texte via l'API officielle HN
+- Stockage en CSV
+
+### Scraping HTML
+```
+code/scraping/hn_html_scrape.py
+```
+- Parsing HTML avec `requests` + `BeautifulSoup`
+- Extraction de texte non structuré
+- Simulation de données réelles de commentaires
 
 ---
 
-###  Scraping via API Publique — Hacker News
-
-- Source : https://news.ycombinator.com
-- Méthode : API officielle Firebase Hacker News
-- Format : JSON structuré
-
-#### Implémentation
-Le script `code/scraping/hn_api_collect.py` :
-
-- Récupère les IDs des items
-- Filtre les commentaires (`type == comment`)
-- Extrait les champs :
-  - id
-  - by
-  - time
-  - parent
-  - text
-- Sauvegarde dans : data/raw_scraped/hn_comments_raw.csv
-
-#### Objectif
-
-- Collecte massive (plusieurs milliers de commentaires)
-- Données structurées
-- Tests de robustesse du modèle
-- Simulation d’inférence en production
-
----
-
-###  Scraping HTML — Parsing du DOM
-
-- Source : pages HTML `item?id=XXXX`
-- Méthode : `requests` + `BeautifulSoup`
-- Extraction des balises `span.commtext`
-
-#### Implémentation
-Le script `code/scraping/hn_html_scrape.py` :
-
-1. Récupère les IDs des threads depuis la page d’accueil
-2. Accède aux pages de discussion
-3. Parse le HTML
-4. Extrait les commentaires
-5. Nettoie le texte (regex + normalisation)
-6. Sauvegarde dans : data/raw_scraped/hn_comments_html.csv
-
-#### Pourquoi faire du scraping HTML ?
-
-- Comprendre la structure DOM d’un site réel
-- Manipuler des données non structurées
-- Gérer rate limiting et parsing
-- Simuler un scénario industriel réel
-
----
-
-### Objectifs globaux du Web Scraping dans ToxiScan
-
-- Collecter plusieurs milliers de commentaires publics
-- Tester la robustesse du modèle entraîné
-- Réaliser une EDA complémentaire sur données réelles
-- Alimenter la démonstration du frontend
-- Simuler une utilisation en conditions réelles
-
----
-
-### Positionnement dans le projet
-
--  Dataset Hugging Face → Entraînement supervisé + MLflow  
--  Données scrapées (API + HTML) → Tests d’inférence & démonstration
-
-> Le dataset Hugging Face est utilisé pour l'entraînement supervisé,  
-> tandis que les données scrapées servent à l’évaluation qualitative
-> et à la validation en conditions réelles.
-
----
-
-### Bonnes pratiques & éthique
-
-- Données publiques uniquement
-- Respect du rate limiting
-- Aucun contournement de protection
-- Usage académique exclusivement
-
----
-
-## Architecture cible (End-to-End)
-
-![Architecture End-to-End de ToxiScan](assets/architecture.png)
+## Architecture du projet
 
 ```mermaid
 flowchart LR
-  A[Data Sources\nHuggingFace Dataset Labeled\nWeb Scraping Hacker News]
-    --> B[Cleaning and EDA]
-
-  B --> C[ML Pipeline\nPreprocessing and Feature Engineering]
-
-  C --> D[Model Training\nBaselines and Advanced Models]
-
-  D --> E[Ensembling\nVoting and Stacking]
-
-  E --> F[MLflow Tracking\nParameters Metrics Artifacts]
-
-  F --> G[Best Model\nExport PKL]
-
-  G --> H[FastAPI Backend\nSwagger API]
-
-  H --> I[Angular Frontend]
-
-  I --> J[Docker Deployment]
+    A[Dataset HuggingFace\n+ Web Scraping]
+    --> B[EDA & Cleaning]
+    --> C[Text Preprocessing]
+    --> D[Model Training]
+    --> E[MLflow Tracking]
+    --> F[Best Model Export]
+    --> G[FastAPI Backend]
+    --> H[React Dashboard]
+    --> I[Docker Deployment]
 ```
+
 ---
-##  Modélisation & Comparaison (implémentée)
+
+## Modélisation Machine Learning
 
 ### Modèle baseline
+**TF-IDF + Logistic Regression (OneVsRest)**
+- `class_weight="balanced"` pour gérer le déséquilibre des classes
+- Optimisation via `GridSearchCV`
 
-- TF-IDF + OneVsRest(LogisticRegression)
-- Gestion du déséquilibre via class_weight="balanced"
-- Optimisation des hyperparamètres avec GridSearchCV
+### Modèles avancés comparés
+- Random Forest
+- XGBoost
 
-Ce modèle s’est révélé le plus performant en F1-score macro.
-
----
-
-### Modèles avancés testés
-
-- Random Forest (avec réduction de dimension via TruncatedSVD)
-- XGBoost (avec TruncatedSVD)
-
-Ces modèles ont été évalués et comparés via MLflow.
+Tous les modèles ont été comparés et tracés avec **MLflow**.
 
 ---
 
-### Suivi des expériences (MLflow)
+## Tracking des expériences (MLflow)
 
-Toutes les expérimentations (Baseline, RandomForest, XGBoost) ont été :
+MLflow a été utilisé pour :
+- Suivre les hyperparamètres de chaque run
+- Comparer les métriques (F1, Precision, Recall)
+- Sauvegarder et versionner les modèles
 
-- Trackées avec MLflow
-- Comparées via F1-macro et F1-weighted
-- Loggées avec paramètres et artefacts
-
-Le meilleur modèle sélectionné :
-
-TF-IDF + OneVsRest(LogisticRegression)
-
-Il a été enregistré et exporté pour le déploiement.
+**Meilleur modèle retenu :**  
+`TF-IDF + OneVsRest Logistic Regression`  
+Sauvegardé dans : `models/best_multilabel_tfidf_logreg.joblib`
 
 ---
 
-## Déploiement Backend — FastAPI
+## Backend — FastAPI
 
-Le meilleur modèle entraîné a été exporté au format `.joblib`
-et intégré dans une API REST développée avec FastAPI.
-
-### Lancer l’API en local
+### Lancer l'API
 
 ```bash
-pip install -r requirements.txt
 uvicorn code.app:app --reload
 ```
-Swagger UI : http://127.0.0.1:8000/docs
-Health check : http://127.0.0.1:8000/health
 
----
+**Swagger UI :** [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Endpoints disponibles
+### Endpoints
 
-- GET /health  
-  Vérifie si le modèle est correctement chargé.
+| Méthode | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Vérifie que le modèle est chargé |
+| `POST` | `/predict` | Analyse un commentaire unique |
+| `POST` | `/predict_batch` | Analyse un fichier CSV complet |
+| `POST` | `/predict_url` | Scrape et analyse une page web |
 
-- POST /predict  
-  Prédiction sur un texte unique.
-  Retourne :
-  - Les 6 labels (0/1)
-  - Les probabilités associées
-
-- POST /predict_batch  
-  Permet d’uploader un fichier CSV contenant une colonne
-  `text` ou `comment_text` pour effectuer des prédictions en batch.
-
-### Swagger UI
-
-Documentation interactive disponible via :
-
-http://localhost:8000/docs
-
-Cela permet de tester l’API sans frontend.
-
----
-
-### Exemple de réponse API
+### Paramètres de `/predict_url`
 
 ```json
 {
-  "text": "you are stupid",
-  "predictions": {
-    "toxic": 1,
-    "severe_toxic": 1,
-    "obscene": 1,
-    "threat": 0,
-    "insult": 1,
-    "identity_hate": 1
-  },
-  "probabilities": {
-    "toxic": 0.99,
-    "severe_toxic": 0.72,
-    "obscene": 0.99,
-    "threat": 0.03,
-    "insult": 0.99,
-    "identity_hate": 0.50
-  }
+  "url": "https://example.com/article",
+  "threshold": 0.35,
+  "max_texts": 50
 }
 ```
----
-##  Stack technique
 
-- **Langage :** Python  
-- **Data Science :** pandas, numpy, scikit-learn  
-- **Données textuelles :** TF-IDF, preprocessing de texte  
-- **MLOps :** MLflow    
-- **Backend :** FastAPI + Swagger (déployé et testé)
-- Suivi des expériences : MLflow (tracking + model registry)
-- **Frontend :** Angular  
-- **Déploiement :** Docker & docker-compose  
-- **CI/CD (optionnel) :** GitHub Actions  
+| Paramètre | Description |
+|---|---|
+| `url` | URL de la page à analyser |
+| `threshold` | Seuil de décision (0.1 = sensible → 0.9 = strict) |
+| `max_texts` | Nombre maximum de textes analysés |
 
 ---
-##  Structure du repository
 
+## Frontend Dashboard
+
+Interface développée avec **React + Vite**, thème sombre technique.
+
+### Fonctionnalités
+
+**Tab — Analyse texte**
+- Saisie d'un commentaire
+- Score de toxicité global
+- Niveau de risque (Low / Moderate / High / Very High)
+- Détail des 6 labels avec barres de probabilité
+- Recommandations d'action
+
+**Tab — Analyse CSV (Batch)**
+- Upload d'un fichier `.csv` par drag & drop
+- Colonnes attendues : `text` ou `comment_text`
+- Statistiques globales : total, toxiques, taux, clean
+- Résultats détaillés par ligne
+
+**Tab — Analyse URL**
+- Saisie d'une URL (page web publique ou locale)
+- Scraping automatique du contenu
+- Taux de toxicité global
+- Breakdown par label avec barres de progression
+- Liste des commentaires toxiques avec badges de labels
+
+---
+
+## Déploiement avec Docker
+
+Le projet est entièrement containerisé avec **Docker Compose**.
+
+### Lancer l'application
+
+```bash
+docker compose up --build
+```
+
+### Accès
+
+| Service | URL |
+|---|---|
+| Frontend React | [http://localhost:3000](http://localhost:3000) |
+| Backend FastAPI (Swagger) | [http://localhost:8000/docs](http://localhost:8000/docs) |
+
+### Tester avec la page démo locale
+
+```bash
+# Dans un terminal séparé
+cd /chemin/vers/demo_toxic_page.html
+python -m http.server 9000
+```
+
+Puis dans le dashboard, onglet **URL** :
+```
+http://localhost:9000/demo_toxic_page.html
+```
+
+---
+
+## Structure du repository
+
+```
 ToxiScan/
+│
 ├── README.md
 ├── requirements.txt
-├── data/
-│   ├── raw_hf/
-│   ├── raw_scraped/
-│   └── sample/
+├── docker-compose.yml
+│
 ├── code/
 │   ├── scraping/
+│   │   ├── hn_api_collect.py
+│   │   └── hn_html_scrape.py
 │   ├── eda/
 │   ├── ml/
-│   ├── app.py
-│   └── api/
+│   └── app.py                  ← FastAPI backend
+│
+├── data/                       ← Datasets CSV
+│
 ├── models/
 │   └── best_multilabel_tfidf_logreg.joblib
-├── reports/
-├── frontend/
-├── mlruns/
-└── docker-compose.yml
+│
+├── frontend/                   ← React + Vite
+│   └── src/
+│       ├── App.jsx
+│       ├── App.css
+│       ├── api.js
+│       └── components/
+│           ├── ChurnForm.jsx
+│           ├── BatchUpload.jsx
+│           ├── URLAnalyzer.jsx
+│           └── ResultsDisplay.jsx
+│
+├── mlruns/                     ← MLflow experiments
+│
+└── reports/                    ← Analyses et visualisations
+```
 
 ---
 
-## État actuel du projet
+## Stack technique
 
-Phase 1 :
-- Dataset sélectionné
-- Web scraping API & HTML
-- EDA réalisée
-
-Phase 2 :
-- Pipeline TF-IDF + Logistic Regression
-- Optimisation GridSearchCV
-- Modèles avancés (RF, XGB)
-- Tracking MLflow
-- Sélection du meilleur modèle
-
-Phase 3 (en cours) :
-- API FastAPI fonctionnelle
-- Tests Swagger validés
-- Intégration frontend à venir  
+| Catégorie | Technologies |
+|---|---|
+| **Machine Learning** | Python, Scikit-learn, Pandas, NumPy |
+| **NLP** | TF-IDF, Tokenization, Text cleaning |
+| **Backend** | FastAPI, Uvicorn, BeautifulSoup |
+| **Frontend** | React, Vite, Axios |
+| **MLOps** | MLflow |
+| **Deployment** | Docker, Docker Compose |
 
 ---
-##  Conclusion
 
-**ToxiScan** est un projet de Machine Learning appliqué aux données textuelles,
-couvrant l’ensemble du cycle de vie d’un modèle, depuis la donnée brute jusqu’au
-déploiement, tout en respectant les bonnes pratiques de l’ingénierie Data Science
-et du MLOps.
+## Conclusion
 
+**ToxiScan** est un projet complet de Machine Learning appliqué au NLP, couvrant l'ensemble du pipeline :
 
+```
+Data Collection
+  → EDA & Preprocessing
+    → Model Training & Comparison
+      → MLflow Tracking
+        → FastAPI Backend
+          → React Dashboard
+            → Docker Deployment
+```
+
+Le système démontre comment intégrer **Machine Learning**, **MLOps** et **développement web** dans une application fonctionnelle de détection automatique de toxicité — prête à être déployée en production.

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToxiScan Demo — Forum Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --surface: #16161c;
+      --border: #2a2a35;
+      --accent: #ff3c3c;
+      --accent2: #ff8c00;
+      --warn: #ffcc00;
+      --safe: #00e090;
+      --text: #d4d4e0;
+      --muted: #666680;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      height: 60px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    header .logo {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+    }
+    header .logo span { color: var(--text); }
+    header nav { display: flex; gap: 1.5rem; margin-left: auto; }
+    header nav a {
+      color: var(--muted); font-size: 0.8rem;
+      text-decoration: none; letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    header nav a:hover { color: var(--text); }
+    .badge-live {
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Thread title ── */
+    .thread-header {
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--accent);
+      padding-left: 1.2rem;
+    }
+    .thread-header .category {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.4rem;
+    }
+    .thread-header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #fff;
+    }
+    .thread-meta {
+      margin-top: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex; gap: 1.5rem;
+    }
+
+    /* ── Warning banner ── */
+    .demo-banner {
+      background: #1a1400;
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      border-radius: 4px;
+      padding: 0.8rem 1.2rem;
+      margin-bottom: 2rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--warn);
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .demo-banner::before { content: '⚠'; font-size: 1rem; }
+
+    /* ── Comment card ── */
+    .comment {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1rem;
+      position: relative;
+      transition: border-color 0.2s;
+      animation: fadeUp 0.4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Toxicity variants */
+    .comment.toxic        { border-left: 3px solid var(--accent);  background: #1a0e0e; }
+    .comment.severe       { border-left: 3px solid #cc0000;        background: #1a0808; }
+    .comment.obscene      { border-left: 3px solid #e040fb;        background: #170e1a; }
+    .comment.threat       { border-left: 3px solid var(--accent2); background: #1a1000; }
+    .comment.insult       { border-left: 3px solid #ff6b6b;        background: #1a0f0f; }
+    .comment.identity     { border-left: 3px solid #f59e0b;        background: #1a1500; }
+    .comment.neutral      { border-left: 3px solid var(--safe);    background: #0e1a14; }
+
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.7rem;
+    }
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .username {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .timestamp {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .comment-body {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .comment-footer {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.9rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--border);
+    }
+    .reaction-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); font-family: var(--mono);
+      font-size: 0.68rem; padding: 3px 10px;
+      border-radius: 3px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .reaction-btn:hover { border-color: var(--text); color: var(--text); }
+
+    /* Label tags */
+    .labels {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      margin-left: auto;
+    }
+    .label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      padding: 2px 7px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+    .label.toxic        { background: #3d0f0f; color: var(--accent); border: 1px solid var(--accent); }
+    .label.severe_toxic { background: #2a0000; color: #ff5555; border: 1px solid #ff5555; }
+    .label.obscene      { background: #2a0a2e; color: #e040fb; border: 1px solid #e040fb; }
+    .label.threat       { background: #2a1a00; color: var(--accent2); border: 1px solid var(--accent2); }
+    .label.insult       { background: #2e1010; color: #ff6b6b; border: 1px solid #ff6b6b; }
+    .label.identity_hate{ background: #2a1f00; color: #f59e0b; border: 1px solid #f59e0b; }
+    .label.clean        { background: #0a2a1a; color: var(--safe); border: 1px solid var(--safe); }
+
+    /* ── Separator ── */
+    .section-sep {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 2rem 0 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .section-sep::before, .section-sep::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.9rem 1rem;
+      text-align: center;
+    }
+    .stat-card .num {
+      font-family: var(--mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .stat-card .lbl {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .stat-card:nth-child(1) .num { color: var(--accent); }
+    .stat-card:nth-child(2) .num { color: var(--accent2); }
+    .stat-card:nth-child(3) .num { color: #e040fb; }
+    .stat-card:nth-child(4) .num { color: var(--safe); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TOXI<span>SCAN</span></div>
+  <span class="badge-live">DEMO</span>
+  <nav>
+    <a href="#">Forum</a>
+    <a href="#">Rules</a>
+    <a href="#">Report</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div class="demo-banner">
+    PAGE DE DÉMONSTRATION — Contenu fictif généré pour tester la détection de toxicité. Ne reflète pas de vraies opinions.
+  </div>
+
+  <div class="thread-header">
+    <div class="category">🔥 Hot Thread · Tech &amp; Politics</div>
+    <h1>Should AI companies be regulated? Discuss.</h1>
+    <div class="thread-meta">
+      <span>📌 Pinned</span>
+      <span>💬 28 comments</span>
+      <span>👁 4,291 views</span>
+      <span>🕐 3 hours ago</span>
+    </div>
+  </div>
+
+  <!-- Stats summary -->
+  <div class="stats-bar">
+    <div class="stat-card"><span class="num">28</span><span class="lbl">Total Comments</span></div>
+    <div class="stat-card"><span class="num">18</span><span class="lbl">Flagged Toxic</span></div>
+    <div class="stat-card"><span class="num">6</span><span class="lbl">Threats Detected</span></div>
+    <div class="stat-card"><span class="num">10</span><span class="lbl">Clean Comments</span></div>
+  </div>
+
+  <!-- ══ TOXIC SECTION ══ -->
+  <div class="section-sep">☣ Toxic · Insult</div>
+
+  <div class="comment toxic" style="animation-delay:0.05s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#3d0f0f;color:#ff3c3c">xX</div>
+      <span class="username">xXanon_rage</span>
+      <span class="timestamp">2h ago</span>
+    </div>
+    <div class="comment-body">
+      You are a complete moron and an absolute disgrace. People like you have no business talking about things you clearly don't understand. Go back to school, you brainless idiot.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 12</button>
+      <button class="reaction-btn">👎 89</button>
+      <div class="labels">
+        <span class="label toxic">toxic</span>
+        <span class="label insult">insult</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment insult" style="animation-delay:0.1s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2e1010;color:#ff6b6b">TR</div>
+      <span class="username">TruthRage99</span>
+      <span class="timestamp">2h ago</span>
+    </div>
+    <div class="comment-body">
+      This is the dumbest take I've seen all week, and trust me, there's been some serious competition. You're either incredibly stupid or deliberately trolling. Either way, nobody wants to hear your garbage opinions.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 4</button>
+      <button class="reaction-btn">👎 71</button>
+      <div class="labels">
+        <span class="label insult">insult</span>
+        <span class="label toxic">toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment insult" style="animation-delay:0.15s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2e1010;color:#ff6b6b">hk</div>
+      <span class="username">hackerman_real</span>
+      <span class="timestamp">1h 50m ago</span>
+    </div>
+    <div class="comment-body">
+      Wow, what an idiot. I can't believe someone actually typed this with a straight face. You should be embarrassed. Your parents must be so disappointed.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 2</button>
+      <button class="reaction-btn">👎 55</button>
+      <div class="labels">
+        <span class="label insult">insult</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEVERE / OBSCENE SECTION ══ -->
+  <div class="section-sep">🔞 Severe · Obscene</div>
+
+  <div class="comment severe" style="animation-delay:0.2s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a0000;color:#ff5555">DR</div>
+      <span class="username">DeathRow_anon</span>
+      <span class="timestamp">1h 45m ago</span>
+    </div>
+    <div class="comment-body">
+      I hope you rot. You are genuinely one of the worst excuses for a human being I have ever encountered. You are utterly worthless and the world would be a better place without idiots like you polluting discussions.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 1</button>
+      <button class="reaction-btn">👎 120</button>
+      <div class="labels">
+        <span class="label severe_toxic">severe toxic</span>
+        <span class="label insult">insult</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment obscene" style="animation-delay:0.25s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a0a2e;color:#e040fb">gg</div>
+      <span class="username">gutter_grrl</span>
+      <span class="timestamp">1h 40m ago</span>
+    </div>
+    <div class="comment-body">
+      What the f*** is wrong with you people? This is the most a**-backwards sh** I've read in years. You're all a bunch of brain-dead losers with nothing better to do than spew garbage online.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 8</button>
+      <button class="reaction-btn">👎 98</button>
+      <div class="labels">
+        <span class="label obscene">obscene</span>
+        <span class="label toxic">toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment obscene" style="animation-delay:0.3s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a0a2e;color:#e040fb">rm</div>
+      <span class="username">ranting_max</span>
+      <span class="timestamp">1h 35m ago</span>
+    </div>
+    <div class="comment-body">
+      Go to hell. Seriously. Every single one of you defending this cr** should be ashamed. This is pure b******* and you all know it. Stop being such pathetic little worms.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 3</button>
+      <button class="reaction-btn">👎 77</button>
+      <div class="labels">
+        <span class="label obscene">obscene</span>
+        <span class="label insult">insult</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ THREAT SECTION ══ -->
+  <div class="section-sep">⚠ Threat</div>
+
+  <div class="comment threat" style="animation-delay:0.35s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a1a00;color:#ff8c00">sk</div>
+      <span class="username">skull_knight_47</span>
+      <span class="timestamp">1h 30m ago</span>
+    </div>
+    <div class="comment-body">
+      Keep talking like that and see what happens. I know people who deal with loudmouths like you. Watch your back. You won't be posting online much longer if you keep this up.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 0</button>
+      <button class="reaction-btn">👎 203</button>
+      <div class="labels">
+        <span class="label threat">threat</span>
+        <span class="label toxic">toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment threat" style="animation-delay:0.4s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a1a00;color:#ff8c00">BD</div>
+      <span class="username">BurningDown_2024</span>
+      <span class="timestamp">1h 20m ago</span>
+    </div>
+    <div class="comment-body">
+      Say one more word and I will make sure you regret it. I'm not joking. People like you deserve to be taught a real lesson. You have no idea who you're messing with.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 0</button>
+      <button class="reaction-btn">👎 187</button>
+      <div class="labels">
+        <span class="label threat">threat</span>
+        <span class="label severe_toxic">severe toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ IDENTITY HATE SECTION ══ -->
+  <div class="section-sep">🏴 Identity Hate</div>
+
+  <div class="comment identity" style="animation-delay:0.45s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a1f00;color:#f59e0b">NR</div>
+      <span class="username">NPC_remover</span>
+      <span class="timestamp">1h 10m ago</span>
+    </div>
+    <div class="comment-body">
+      Of course people from that background would think this way. They always do. It's in their culture to be this way. You can't expect anything better from people like them.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 5</button>
+      <button class="reaction-btn">👎 244</button>
+      <div class="labels">
+        <span class="label identity_hate">identity hate</span>
+        <span class="label toxic">toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment identity" style="animation-delay:0.5s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a1f00;color:#f59e0b">BW</div>
+      <span class="username">BrokenWorld_33</span>
+      <span class="timestamp">55m ago</span>
+    </div>
+    <div class="comment-body">
+      I'm sick of certain groups always getting a free pass. They push their agenda everywhere and everyone just rolls over. Disgusting. They don't belong in these conversations.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 7</button>
+      <button class="reaction-btn">👎 199</button>
+      <div class="labels">
+        <span class="label identity_hate">identity hate</span>
+        <span class="label insult">insult</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MIXED / ESCALATION ══ -->
+  <div class="section-sep">💀 Severe · Mixed Labels</div>
+
+  <div class="comment severe" style="animation-delay:0.55s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a0000;color:#ff5555">vh</div>
+      <span class="username">void_herald</span>
+      <span class="timestamp">50m ago</span>
+    </div>
+    <div class="comment-body">
+      You are the most repulsive, brain-dead waste of oxygen I have had the misfortune of reading. I genuinely despise you and everything you stand for. Crawl back into whatever hole you came from and stay there.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 0</button>
+      <button class="reaction-btn">👎 311</button>
+      <div class="labels">
+        <span class="label severe_toxic">severe toxic</span>
+        <span class="label insult">insult</span>
+        <span class="label toxic">toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment severe" style="animation-delay:0.6s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#2a0000;color:#ff5555">DP</div>
+      <span class="username">DarkPulse_gg</span>
+      <span class="timestamp">45m ago</span>
+    </div>
+    <div class="comment-body">
+      I hate you and everyone in this thread. You're all pathetic excuses for human beings. I hope your life falls apart. You deserve nothing good. This whole community is a disgusting cesspool.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 0</button>
+      <button class="reaction-btn">👎 278</button>
+      <div class="labels">
+        <span class="label severe_toxic">severe toxic</span>
+        <span class="label toxic">toxic</span>
+        <span class="label insult">insult</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ NEUTRAL SECTION ══ -->
+  <div class="section-sep">✅ Clean · Neutral</div>
+
+  <div class="comment neutral" style="animation-delay:0.65s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#0a2a1a;color:#00e090">MK</div>
+      <span class="username">mild_kev</span>
+      <span class="timestamp">40m ago</span>
+    </div>
+    <div class="comment-body">
+      I think regulation is necessary but needs to be carefully scoped. Heavy-handed rules could stifle innovation while being too lax creates real risks. There's a reasonable middle ground here.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 142</button>
+      <button class="reaction-btn">👎 9</button>
+      <div class="labels">
+        <span class="label clean">clean</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment neutral" style="animation-delay:0.7s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#0a2a1a;color:#00e090">SL</div>
+      <span class="username">sara_l</span>
+      <span class="timestamp">35m ago</span>
+    </div>
+    <div class="comment-body">
+      Good points on both sides. The EU AI Act is already setting a precedent. I'd recommend reading the paper linked in the article before forming a strong opinion — the data is pretty clear.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 98</button>
+      <button class="reaction-btn">👎 4</button>
+      <div class="labels">
+        <span class="label clean">clean</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="comment neutral" style="animation-delay:0.75s">
+    <div class="comment-meta">
+      <div class="avatar" style="background:#0a2a1a;color:#00e090">jc</div>
+      <span class="username">just_curious_42</span>
+      <span class="timestamp">20m ago</span>
+    </div>
+    <div class="comment-body">
+      I disagree with some of the conclusions here, but I think this is a healthy debate to have. Reasonable people can hold different views on this.
+    </div>
+    <div class="comment-footer">
+      <button class="reaction-btn">👍 67</button>
+      <button class="reaction-btn">👎 3</button>
+      <div class="labels">
+        <span class="label clean">clean</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,244 +1,325 @@
 // frontend/src/components/ResultsDisplay.jsx
+
 const LABELS = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"];
 
-const LABEL_DISPLAY = {
-  toxic: "Toxic",
-  severe_toxic: "Severe toxic",
-  obscene: "Obscene",
-  threat: "Threat",
-  insult: "Insult",
-  identity_hate: "Identity hate",
+const LABEL_META = {
+  toxic:         { display: "Toxic",         icon: "☣", color: "#ff3c3c", bg: "#3d0f0f" },
+  severe_toxic:  { display: "Severe Toxic",  icon: "💀", color: "#ff5555", bg: "#2a0000" },
+  obscene:       { display: "Obscene",       icon: "🔞", color: "#e040fb", bg: "#2a0a2e" },
+  threat:        { display: "Threat",        icon: "⚠",  color: "#ff8c00", bg: "#2a1a00" },
+  insult:        { display: "Insult",        icon: "🗡",  color: "#ff6b6b", bg: "#2e1010" },
+  identity_hate: { display: "Identity Hate", icon: "🏴", color: "#f59e0b", bg: "#2a1f00" },
 };
 
-function clamp01(x) {
-  const n = Number(x);
-  if (Number.isNaN(n)) return 0;
-  return Math.max(0, Math.min(1, n));
+// ── Helpers ──────────────────────────────────────────────────
+function clamp(x) { const n = Number(x); return isNaN(n) ? 0 : Math.max(0, Math.min(1, n)); }
+function pct(x, d = 1) { return `${(clamp(x) * 100).toFixed(d)}%`; }
+
+function globalScore(probs = {}) {
+  const vals = LABELS.map((l) => clamp(probs[l] ?? 0));
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-function fmtPct(x) {
-  return `${Math.round(clamp01(x) * 1000) / 10}%`; // 1 décimale
+function riskMeta(score) {
+  const s = clamp(score);
+  if (s < 0.25) return { label: "Low",      color: "#00e090", bg: "#0a2a1a" };
+  if (s < 0.50) return { label: "Moderate", color: "#ff8c00", bg: "#2a1a00" };
+  if (s < 0.75) return { label: "High",     color: "#ff3c3c", bg: "#1a0808" };
+  return              { label: "Very High", color: "#ff0000", bg: "#1a0000" };
 }
 
-function riskLevel(score01) {
-  const s = clamp01(score01);
-  if (s < 0.25) return { label: "Faible", tone: "ok" };
-  if (s < 0.5) return { label: "Modéré", tone: "warn" };
-  if (s < 0.75) return { label: "Élevé", tone: "bad" };
-  return { label: "Très élevé", tone: "bad2" };
+function recommendations(score, detectedLabels = []) {
+  const level = riskMeta(score).label;
+  const det   = detectedLabels.length ? detectedLabels.join(", ") : "none";
+  const map = {
+    "Very High": ["Block or hide immediately — escalate to priority moderation.", "Log for audit trail and model improvement."],
+    "High":      ["Human review recommended before publishing.", "Warn the user or request reformulation."],
+    "Moderate":  ["Apply soft filters (partial masking, shadow-ban).", "Keep event in monitoring statistics."],
+    "Low":       ["No automatic action required.", "Log for background monitoring."],
+  };
+  return [...(map[level] || []), `Detected labels: ${det}`];
 }
 
-function computeGlobalScore(probabilities = {}) {
-  // Score global simple et lisible: moyenne des probas (0..1)
-  const vals = LABELS.map((l) => clamp01(probabilities?.[l] ?? 0));
-  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-  return mean;
-}
-
-function topK(probabilities = {}, k = 3) {
-  const items = LABELS.map((l) => ({
-    label: l,
-    p: clamp01(probabilities?.[l] ?? 0),
-  }));
-  items.sort((a, b) => b.p - a.p);
-  return items.slice(0, k);
-}
-
-function badgeClass(pred) {
-  return pred === 1 ? "badge bad" : "badge ok";
-}
-
-function progressTone(pred, p) {
-  // Couleur de barre cohérente: si label détecté -> rouge, sinon vert (ou jaune si moyen)
-  if (pred === 1) return "bad";
-  if (p >= 0.35) return "warn";
-  return "ok";
-}
-
-function recommendations(score01, detectedLabels = []) {
-  const { label } = riskLevel(score01);
-  const detectedTxt = detectedLabels.length ? detectedLabels.join(", ") : "aucun";
-
-  if (label === "Très élevé") {
-    return [
-      "Contenu très toxique probable : bloquer ou masquer + escalader (modération prioritaire).",
-      "Conserver une trace (log) pour audit et amélioration du modèle.",
-      `Labels détectés : ${detectedTxt}`,
-    ];
-  }
-  if (label === "Élevé") {
-    return [
-      "Contenu toxique possible : review humaine recommandée.",
-      "Avertir l’utilisateur / demander reformulation (si plateforme).",
-      `Labels détectés : ${detectedTxt}`,
-    ];
-  }
-  if (label === "Modéré") {
-    return [
-      "Risque modéré : surveiller / appliquer filtres soft (ex: masquage partiel).",
-      "Conserver l’événement pour statistiques.",
-      `Labels détectés : ${detectedTxt}`,
-    ];
-  }
-  return [
-    "Risque faible : aucune action automatique nécessaire.",
-    "Vous pouvez quand même conserver un log pour monitoring.",
-    `Labels détectés : ${detectedTxt}`,
-  ];
-}
-
-export default function ResultsDisplay({ result, batch }) {
-  const single = result || null;
-  const probs = single?.probabilities || {};
-  const preds = single?.predictions || {};
-
-  const global = single ? computeGlobalScore(probs) : 0;
-  const level = single ? riskLevel(global) : null;
-
-  const detected = single
-    ? LABELS.filter((l) => (preds?.[l] ?? 0) === 1).map((l) => LABEL_DISPLAY[l] || l)
-    : [];
-
-  const top3 = single ? topK(probs, 3) : [];
-
+// ── Sub-components ───────────────────────────────────────────
+function EmptyState() {
   return (
-    <div className="resultsCard">
-      <div className="resultsHeader">
-        <h2>Résultats</h2>
-        {!single && !batch && <span className="subtle">Aucun résultat pour le moment.</span>}
+    <div style={S.empty}>
+      <div style={{ fontSize: "2.5rem", opacity: 0.2 }}>⬡</div>
+      <div style={{ fontSize: "0.85rem", color: "#666680", letterSpacing: "0.08em" }}>No results yet</div>
+      <div style={{ fontSize: "0.72rem", color: "#444458", textAlign: "center", lineHeight: 1.7 }}>
+        Run an analysis from the left panel —<br />text, CSV batch, or URL scan.
       </div>
-
-      {/* -------- SINGLE PREDICTION -------- */}
-      {single && (
-        <div className="section">
-          <div className="sectionTitle">
-            <span className="sectionDot" />
-            <h3>Analyse du texte</h3>
-          </div>
-
-          <div className="quoteBox">
-            <div className="quoteLabel">Texte</div>
-            <div className="quoteText">{single.text}</div>
-          </div>
-
-          <div className={`riskBox tone-${level.tone}`}>
-            <div className="riskTop">
-              <div className="riskTitle">
-                <span className="riskKicker">Score global</span>
-                <span className="riskScore">{fmtPct(global)}</span>
-              </div>
-              <span className={`riskPill tone-${level.tone}`}>Risque : {level.label}</span>
-            </div>
-
-            <div className="progressTrack">
-              <div className={`progressFill tone-${level.tone}`} style={{ width: `${clamp01(global) * 100}%` }} />
-            </div>
-
-            <div className="recoBox">
-              <div className="recoTitle">Recommandations</div>
-              <ul className="recoList">
-                {recommendations(global, detected).map((t, idx) => (
-                  <li key={idx}>{t}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="sectionTitle" style={{ marginTop: 14 }}>
-            <span className="sectionDot" />
-            <h3>Top 3 labels les plus probables</h3>
-            <span className="subtle">(priorité modération)</span>
-          </div>
-
-          <div className="topGrid">
-            {top3.map((it) => {
-              const pred = preds?.[it.label] ?? 0;
-              const tone = progressTone(pred, it.p);
-              return (
-                <div key={it.label} className="miniCard">
-                  <div className="miniTop">
-                    <div className="miniName">{LABEL_DISPLAY[it.label] || it.label}</div>
-                    <span className={badgeClass(pred)}>{pred}</span>
-                  </div>
-                  <div className="miniMeta">
-                    proba: <b>{clamp01(it.p).toFixed(4)}</b>
-                  </div>
-
-                  <div className="miniBar">
-                    <div className={`miniFill tone-${tone}`} style={{ width: `${clamp01(it.p) * 100}%` }} />
-                  </div>
-
-                  <div className="miniHint">
-                    {pred === 1 ? "⚠️ Label détecté." : "✅ Non détecté (selon seuil interne du modèle)."}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="sectionTitle" style={{ marginTop: 14 }}>
-            <span className="sectionDot" />
-            <h3>Détails complets (6 labels)</h3>
-          </div>
-
-          <div className="labelsGrid">
-            {LABELS.map((lab) => {
-              const pred = preds?.[lab] ?? 0;
-              const p = clamp01(probs?.[lab] ?? 0);
-              const tone = progressTone(pred, p);
-
-              return (
-                <div key={lab} className="labelCardX">
-                  <div className="labelTopX">
-                    <div className="labelNameX">{LABEL_DISPLAY[lab] || lab}</div>
-                    <span className={badgeClass(pred)}>{pred}</span>
-                  </div>
-
-                  <div className="labelMetaX">
-                    <span className="subtle">proba</span>
-                    <b>{p.toFixed(4)}</b>
-                  </div>
-
-                  <div className="progressTrack">
-                    <div className={`progressFill tone-${tone}`} style={{ width: `${p * 100}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* -------- BATCH -------- */}
-      {batch && (
-        <div className="section">
-          <div className="sectionTitle">
-            <span className="sectionDot" />
-            <h3>Résultats Batch</h3>
-            <span className="subtle">({batch.n_rows} lignes)</span>
-          </div>
-
-          <div className="batchList">
-            {(batch.results || []).slice(0, 10).map((row, idx) => (
-              <div key={idx} className="batchItem">
-                <div className="batchText">{row.text}</div>
-
-                <div className="batchBadges">
-                  {LABELS.map((lab) => (
-                    <span key={lab} className={badgeClass(row?.predictions?.[lab] ?? 0)}>
-                      {LABEL_DISPLAY[lab] || lab}:{row?.predictions?.[lab] ?? 0}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="subtle" style={{ marginTop: 8 }}>
-            Affichage limité aux 10 premières lignes.
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+function Separator({ label, right }) {
+  return (
+    <div style={S.sep}>
+      <span>{label}</span>
+      <div style={S.sepLine} />
+      {right && <span style={{ color: "#444458", whiteSpace: "nowrap" }}>{right}</span>}
+    </div>
+  );
+}
+
+function LabelBar({ lab, prob, pred }) {
+  const meta  = LABEL_META[lab];
+  const p     = clamp(prob);
+  const color = pred === 1 ? meta.color : p >= 0.35 ? "#ff8c00" : "#444458";
+  return (
+    <div style={{ ...S.labelRow, borderColor: pred === 1 ? meta.color + "44" : "#2a2a35" }}>
+      <div style={S.labelTop}>
+        <span style={{ fontSize: "0.85rem", width: "20px", flexShrink: 0 }}>{meta.icon}</span>
+        <span style={S.labelName}>{meta.display}</span>
+        {pred === 1
+          ? <span style={{ ...S.detBadge, color: meta.color, borderColor: meta.color, background: meta.bg }}> detected</span>
+          : <span style={{ fontSize: "0.7rem", color: "#444458" }}>—</span>
+        }
+        <span style={{ fontSize: "0.72rem", fontWeight: "700", color, fontFamily: "'IBM Plex Mono',monospace" }}>{pct(p)}</span>
+      </div>
+      <div style={S.barBg}><div style={{ ...S.barFill, width: pct(p, 0), background: color }} /></div>
+    </div>
+  );
+}
+
+// ── URL result panel ─────────────────────────────────────────
+function URLResult({ data }) {
+  const agg       = data.aggregate ?? {};
+  const results   = data.results   ?? [];
+  const toxicOnly = data.toxic_texts ?? [];
+  const rate      = ((agg.toxicity_rate ?? 0) * 100).toFixed(1);
+  const rateColor = rate > 50 ? "#ff3c3c" : rate > 25 ? "#ff8c00" : "#00e090";
+  const labelMeans = agg.label_mean_probabilities ?? {};
+
+  return (
+    <div>
+      {/* URL pill */}
+      <div style={S.urlPill}>
+        <span style={{ color: "#444458" }}>⬡</span>
+        <span style={{ color: "#d4d4e0", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {data.url}
+        </span>
+      </div>
+
+      {/* Stats row */}
+      <div style={S.statsGrid}>
+        {[
+          { num: agg.total_texts,                     lbl: "Scraped",        color: "#d4d4e0" },
+          { num: agg.toxic_count,                     lbl: "Toxic",          color: "#ff3c3c" },
+          { num: `${rate}%`,                          lbl: "Toxicity Rate",  color: rateColor  },
+          { num: agg.total_texts - agg.toxic_count,   lbl: "Clean",          color: "#00e090" },
+        ].map((s) => (
+          <div key={s.lbl} style={{ ...S.statCard, borderColor: s.color + "33" }}>
+            <span style={{ ...S.statNum, color: s.color }}>{s.num}</span>
+            <span style={S.statLbl}>{s.lbl}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Label breakdown bars */}
+      <Separator label="Label breakdown" />
+      <div style={S.labelGrid}>
+        {Object.entries(labelMeans).map(([lab, prob]) => {
+          const meta  = LABEL_META[lab];
+          const p     = clamp(prob);
+          const color = meta?.color ?? "#888";
+          return (
+            <div key={lab} style={S.labelMiniCard}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem", fontSize: "0.7rem" }}>
+                <span style={{ color: "#d4d4e0" }}>{meta?.icon} {meta?.display ?? lab}</span>
+                <span style={{ color, fontWeight: 700 }}>{pct(p)}</span>
+              </div>
+              <div style={S.barBg}><div style={{ ...S.barFill, width: pct(p, 0), background: color }} /></div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Toxic comments */}
+      <Separator
+        label={toxicOnly.length > 0 ? `☣ ${toxicOnly.length} toxic comments` : "✅ No toxic comments"}
+        right={`${results.length} total`}
+      />
+      {toxicOnly.map((r, i) => {
+        const activeLabels = Object.entries(r.predictions ?? {}).filter(([, v]) => v === 1).map(([k]) => k);
+        return (
+          <div key={i} style={S.commentCard}>
+            <p style={S.commentText}>{r.text}</p>
+            <div style={S.tagsRow}>
+              {activeLabels.map((lab) => (
+                <span key={lab} style={{
+                  ...S.miniTag,
+                  color: LABEL_META[lab]?.color ?? "#888",
+                  borderColor: LABEL_META[lab]?.color ?? "#888",
+                  background: LABEL_META[lab]?.bg ?? "#111",
+                }}>
+                  {LABEL_META[lab]?.icon} {LABEL_META[lab]?.display ?? lab}
+                </span>
+              ))}
+              {r.top_prob > 0 && (
+                <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "#ff3c3c", fontWeight: 700 }}>
+                  ▲ {(r.top_prob * 100).toFixed(1)}%
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────
+export default function ResultsDisplay({ result, batch, urlResult }) {
+  const single = result ?? null;
+  const probs  = single?.probabilities ?? {};
+  const preds  = single?.predictions   ?? {};
+  const score  = single ? globalScore(probs) : 0;
+  const detected = single
+    ? LABELS.filter((l) => (preds[l] ?? 0) === 1).map((l) => LABEL_META[l].display)
+    : [];
+
+  // ── Empty ──
+  if (!single && !batch && !urlResult) return <EmptyState />;
+
+  // ── URL result ──
+  if (urlResult) return <URLResult data={urlResult} />;
+
+  // ── Single text ──
+  if (single) {
+    const risk = riskMeta(score);
+    return (
+      <div>
+        {/* Analyzed text */}
+        <div style={S.quoteBox}>
+          <div style={S.quoteLabel}>Analyzed text</div>
+          <div style={S.quoteText}>{single.text}</div>
+        </div>
+
+        {/* Score gauge */}
+        <div style={{ ...S.gaugeWrap, background: risk.bg, borderColor: risk.color + "44" }}>
+          <span style={S.gaugeKicker}>Global toxicity score</span>
+          <span style={{ ...S.gaugeScore, color: risk.color }}>{pct(score)}</span>
+          <span style={{ ...S.riskPill, color: risk.color, borderColor: risk.color, background: risk.bg }}>
+            Risk: {risk.label}
+          </span>
+          <div style={{ ...S.barBg, marginTop: "0.9rem" }}>
+            <div style={{ ...S.barFill, width: pct(score, 0), background: risk.color }} />
+          </div>
+        </div>
+
+        {/* Recommendations */}
+        <div style={{ ...S.recoBox, borderColor: risk.color + "33" }}>
+          <div style={{ ...S.recoTitle, color: risk.color }}>▸ Recommended actions</div>
+          {recommendations(score, detected).map((r, i) => (
+            <div key={i} style={S.recoItem}>
+              <span style={{ color: risk.color, marginRight: "0.5rem" }}>›</span>{r}
+            </div>
+          ))}
+        </div>
+
+        {/* Label breakdown */}
+        <Separator label="6 label breakdown" />
+        {LABELS.map((lab) => (
+          <LabelBar key={lab} lab={lab} prob={probs[lab] ?? 0} pred={preds[lab] ?? 0} />
+        ))}
+      </div>
+    );
+  }
+
+  // ── Batch ──
+  if (batch) {
+    const rows   = batch.results ?? [];
+    const nToxic = rows.filter((r) => LABELS.some((l) => (r?.predictions?.[l] ?? 0) === 1)).length;
+    const rate   = rows.length ? ((nToxic / rows.length) * 100).toFixed(1) : 0;
+
+    return (
+      <div>
+        <div style={S.statsGrid}>
+          {[
+            { num: batch.n_rows,         lbl: "Total rows", color: "#d4d4e0" },
+            { num: nToxic,               lbl: "Toxic",      color: "#ff3c3c" },
+            { num: `${rate}%`,           lbl: "Rate",       color: rate > 50 ? "#ff3c3c" : "#ff8c00" },
+            { num: batch.n_rows - nToxic, lbl: "Clean",     color: "#00e090" },
+          ].map((s) => (
+            <div key={s.lbl} style={{ ...S.statCard, borderColor: s.color + "33" }}>
+              <span style={{ ...S.statNum, color: s.color }}>{s.num}</span>
+              <span style={S.statLbl}>{s.lbl}</span>
+            </div>
+          ))}
+        </div>
+
+        <Separator label="First 10 results" />
+
+        {rows.slice(0, 10).map((row, i) => {
+          const detected = LABELS.filter((l) => (row?.predictions?.[l] ?? 0) === 1);
+          return (
+            <div key={i} style={{ ...S.commentCard, borderLeftColor: detected.length ? "#ff3c3c" : "#00e090" }}>
+              <p style={S.commentText}>{row.text}</p>
+              <div style={S.tagsRow}>
+                {detected.length === 0
+                  ? <span style={{ fontSize: "0.7rem", color: "#00e090" }}>✓ clean</span>
+                  : detected.map((lab) => (
+                      <span key={lab} style={{ ...S.miniTag, color: LABEL_META[lab].color, borderColor: LABEL_META[lab].color, background: LABEL_META[lab].bg }}>
+                        {LABEL_META[lab].icon} {LABEL_META[lab].display}
+                      </span>
+                    ))
+                }
+              </div>
+            </div>
+          );
+        })}
+        {rows.length > 10 && (
+          <div style={S.moreRow}>+ {rows.length - 10} more rows</div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// ── Styles ───────────────────────────────────────────────────
+const S = {
+  empty: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "320px", gap: "0.8rem", color: "#444458" },
+  sep:   { display: "flex", alignItems: "center", gap: "0.8rem", fontSize: "0.62rem", color: "#444458", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.8rem", marginTop: "1rem" },
+  sepLine: { flex: 1, height: "1px", background: "#2a2a35" },
+
+  urlPill: { display: "flex", alignItems: "center", gap: "0.6rem", background: "#16161c", border: "1px solid #2a2a35", borderRadius: "4px", padding: "0.5rem 0.9rem", fontSize: "0.72rem", fontFamily: "'IBM Plex Mono',monospace", marginBottom: "1rem", overflow: "hidden" },
+
+  statsGrid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "0.7rem", marginBottom: "1.2rem" },
+  statCard:  { background: "#16161c", border: "1px solid", borderRadius: "5px", padding: "0.8rem", textAlign: "center" },
+  statNum:   { display: "block", fontSize: "1.4rem", fontWeight: "700", lineHeight: 1, marginBottom: "0.3rem" },
+  statLbl:   { fontSize: "0.58rem", color: "#666680", textTransform: "uppercase", letterSpacing: "0.1em" },
+
+  labelGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" },
+  labelMiniCard: { background: "#16161c", border: "1px solid #2a2a35", borderRadius: "4px", padding: "0.6rem 0.8rem" },
+
+  labelRow: { border: "1px solid", borderRadius: "4px", padding: "0.7rem 1rem", marginBottom: "0.5rem", background: "#16161c" },
+  labelTop: { display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" },
+  labelName: { fontSize: "0.75rem", color: "#d4d4e0", flex: 1, letterSpacing: "0.04em" },
+  detBadge: { fontSize: "0.58rem", padding: "1px 6px", borderRadius: "2px", border: "1px solid", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: "600" },
+
+  barBg:   { height: "3px", background: "#2a2a35", borderRadius: "2px", overflow: "hidden" },
+  barFill: { height: "100%", borderRadius: "2px", transition: "width 0.6s ease" },
+
+  commentCard: { background: "#1a0e0e", border: "1px solid #ff3c3c22", borderLeft: "3px solid", borderLeftColor: "#ff3c3c", borderRadius: "4px", padding: "0.8rem 1rem", marginBottom: "0.6rem" },
+  commentText: { fontSize: "0.8rem", color: "#c0c0d0", lineHeight: "1.55", marginBottom: "0.7rem" },
+  tagsRow:     { display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" },
+  miniTag:     { fontSize: "0.58rem", padding: "1px 7px", borderRadius: "2px", border: "1px solid", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: "600" },
+  moreRow:     { textAlign: "center", fontSize: "0.68rem", color: "#444458", padding: "0.8rem", border: "1px dashed #2a2a35", borderRadius: "4px" },
+
+  quoteBox:   { background: "#16161c", border: "1px solid #2a2a35", borderRadius: "5px", padding: "1rem 1.2rem", marginBottom: "1rem" },
+  quoteLabel: { fontSize: "0.6rem", color: "#444458", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.5rem" },
+  quoteText:  { fontSize: "0.85rem", color: "#d4d4e0", lineHeight: "1.6", fontStyle: "italic" },
+
+  gaugeWrap:   { border: "1px solid", borderRadius: "6px", padding: "1.2rem 1.4rem", marginBottom: "1rem" },
+  gaugeKicker: { display: "block", fontSize: "0.6rem", color: "#666680", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.3rem" },
+  gaugeScore:  { display: "block", fontSize: "2.2rem", fontWeight: "700", lineHeight: 1, marginBottom: "0.6rem", fontFamily: "'IBM Plex Mono',monospace" },
+  riskPill:    { display: "inline-block", fontSize: "0.65rem", padding: "2px 10px", borderRadius: "3px", border: "1px solid", letterSpacing: "0.1em", textTransform: "uppercase" },
+
+  recoBox:   { border: "1px solid", borderRadius: "5px", padding: "1rem 1.2rem", marginBottom: "1.2rem", background: "#16161c" },
+  recoTitle: { fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "0.7rem" },
+  recoItem:  { fontSize: "0.75rem", color: "#d4d4e0", lineHeight: "1.6", paddingLeft: "0.5rem", marginBottom: "0.2rem", display: "flex" },
+};
